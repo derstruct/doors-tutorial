@@ -4,21 +4,34 @@ import "github.com/doors-dev/doors"
 
 import "github.com/derstruct/doors-tutorial/driver"
 
-templ category(path doors.SourceBeam[Path]) {
-	@doors.Sub(doors.NewBeam(path, func(p Path) string {
-		return p.CatId
-	}), func(catId string) templ.Component {
-		return categoryContent(catId)
+func category(path doors.SourceBeam[Path]) templ.Component {
+	// doors.F - fragment renderer, also can be used in templates @doors.F(doors.Fragment)
+	return doors.F(&categoryFragment{
+		path: path,
 	})
-	@doors.AHref{
-		Model: Path{
-			IsMain: true,
-		},
-	}
-	<a class="contrast">Go back</a>
 }
 
-templ categoryContent(catId string) {
+type categoryFragment struct {
+	path doors.SourceBeam[Path]
+}
+
+templ (f *categoryFragment) Render() {
+	@f.style()
+	<div class="category">
+		<aside>
+			@f.nav()
+		</aside>
+		<main>
+			@doors.Sub(doors.NewBeam(f.path, func(p Path) string {
+				return p.CatId
+			}), func(catId string) templ.Component {
+				return f.content(catId)
+			})
+		</main>
+	</div>
+}
+
+templ (f *categoryFragment) content(catId string) {
 	{{ cat, ok := driver.Cats.Get(catId) }}
 	if ok {
 		<hgroup>
@@ -29,5 +42,63 @@ templ categoryContent(catId string) {
 		<div>
 			<mark>Not Found</mark>
 		</div>
+	}
+}
+
+templ (d *categoryFragment) nav() {
+	<nav>
+		<ul>
+			<li>
+				// link to main category variant
+				@doors.AHref{
+					Model: Path{
+						IsMain: true,
+					},
+				}
+				<a class="secondary">Go back</a>
+			</li>
+			// query categories
+			for _, cat := range driver.Cats.List() {
+				<li>
+					// attach href 
+					@doors.AHref{
+						// link to category
+						Model: Path{
+							IsCat: true,
+							CatId: cat.Id,
+						},
+						Active: doors.Active{
+							// indicate with attribute
+							Indicator: doors.IndicatorAttr("aria-current", "page"),
+							// path must start with href
+							PathMatcher: doors.PathMatcherStarts(),
+							// ignore query params
+							QueryMatcher: doors.QueryMatcherIgnore(),
+						},
+					}
+					<a class="contrast">{ cat.Name }</a>
+				</li>
+			}
+		</ul>
+	</nav>
+}
+
+templ (f *categoryFragment) style() {
+	// converts inline style to cahcable stylesheet with href
+	@doors.Style() {
+		<style>
+            .category {
+                display: flex;
+                gap: calc(var(--pico-typography-spacing-vertical) * 3);
+            }
+
+            aside {
+                flex: 0 0 auto; 
+            }
+
+            main {
+                flex: 1;
+            }
+        </style>
 	}
 }
