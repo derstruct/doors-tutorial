@@ -1,0 +1,36 @@
+package catalog
+
+import "github.com/doors-dev/doors"
+import "github.com/derstruct/doors-tutorial/common"
+
+type Path = common.CatalogPath
+
+type catalogPage struct {
+}
+
+templ (c *catalogPage) Head() {
+	<title>catalog</title>
+}
+
+templ (c *catalogPage) Body() {
+	<h1>Catalog</h1>
+}
+
+/*
+Instead of doing this:
+
+templ (c *catalogPage) Render(b doors.SourceBeam[Path]) {
+	@common.Template(c)
+}
+
+Because there is only one component `common.Template(c)`, we can return it directly:
+*/
+
+func (c *catalogPage) Render(b doors.SourceBeam[Path]) templ.Component {
+    return common.Template(c)
+}
+
+// page request handler
+func Handler(p doors.PageRouter[Path], r doors.RPage[Path]) doors.PageRoute {
+	return p.Page(&catalogPage{})
+}

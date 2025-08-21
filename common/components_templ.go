@@ -10,12 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/doors-dev/doors"
 
-type Page interface {
-	Head() templ.Component
-	Body() templ.Component
-}
-
-func Template(p Page) templ.Component {
+func menu() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -36,37 +31,46 @@ func Template(p Page) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"color-scheme\" content=\"light dark\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<nav><ul><li><strong>doors tutorial</strong></li></ul><ul><li>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = doors.Include().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = doors.ImportStyleExternal{
-			Href: "https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css",
+		templ_7745c5c3_Err = doors.AHref{
+			// href Path Model
+			Model: HomePath{},
+			// active link highlighting settings
+			Active: doors.Active{
+				// indicate active link with class
+				Indicator: doors.IndicatorAttr("aria-current", "page"),
+			},
 		}.Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = p.Head().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<a>home</a></li><li>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</head><body><main class=\"container\">")
+		templ_7745c5c3_Err = doors.AHref{
+			// href Path Model
+			Model: CatalogPath{
+				// marker of variant
+				IsMain: true,
+			},
+			// active link highlighting settings
+			Active: doors.Active{
+				// indicate active link with class
+				Indicator: doors.IndicatorAttr("aria-current", "page"),
+				// page path must start with href value
+				PathMatcher: doors.PathMatcherStarts(),
+				// ignore query params
+				QueryMatcher: doors.QueryMatcherIgnore(),
+			},
+		}.Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = menu().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = p.Body().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</main></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<a>catalog</a></li></ul></nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

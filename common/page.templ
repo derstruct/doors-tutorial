@@ -2,15 +2,11 @@ package common
 
 import "github.com/doors-dev/doors"
 
-// all our pages must be of this shape
 type Page interface {
-	// method returns component for head insertion
 	Head() templ.Component
-	// method returns component for body insertion
 	Body() templ.Component
 }
 
-// now page template that takes `Page` as arg
 templ Template(p Page) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -18,14 +14,21 @@ templ Template(p Page) {
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<meta name="color-scheme" content="light dark"/>
-			// IMPORTANT: include framework script
 			@doors.Include()
-			// render page head
+			// same as <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
+			// but adds CSP headers (useful if you enable CSP later), please refer to docs/ref/imports.md for details
+			@doors.ImportStyleExternal{
+				Href: "https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css",
+			}
 			@p.Head()
 		</head>
 		<body>
-			// render page content
-			@p.Body()
+			// PicoCSS container
+			<main class="container">
+				// menu component
+				@menu()
+				@p.Body()
+			</main>
 		</body>
 	</html>
 }

@@ -1,0 +1,44 @@
+package common
+
+import "github.com/doors-dev/doors"
+
+templ menu() {
+	<nav>
+		<ul>
+			<li><strong>doors tutorial</strong></li>
+		</ul>
+		<ul>
+			<li>
+				@doors.AHref{
+					// href Path Model
+					Model: HomePath{},
+					// active link highlighting settings
+					Active: doors.Active{
+						// indicate active link with class
+						Indicator: doors.IndicatorAttr("aria-current", "page"),
+					},
+				}
+				<a>home</a>
+			</li>
+			<li>
+				@doors.AHref{
+					// href Path Model
+					Model: CatalogPath{
+						// marker of variant
+						IsMain: true,
+					},
+					// active link highlighting settings
+					Active: doors.Active{
+						// indicate active link with class
+						Indicator: doors.IndicatorAttr("aria-current", "page"),
+						// page path must start with href value
+						PathMatcher: doors.PathMatcherStarts(),
+						// ignore query params
+						QueryMatcher: doors.QueryMatcherIgnore(),
+					},
+				}
+				<a>catalog</a>
+			</li>
+		</ul>
+	</nav>
+}
