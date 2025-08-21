@@ -10,9 +10,8 @@ import (
 
 func main() {
 	r := doors.NewRouter()
-	r.Use(doors.ServePage(home.Handler))
 
-	// our new catalog page
+	r.Use(doors.ServePage(home.Handler))
 	r.Use(doors.ServePage(catalog.Handler))
 
 	err := http.ListenAndServeTLS(":8443", "localhost+2.pem", "localhost+2-key.pem", r)
