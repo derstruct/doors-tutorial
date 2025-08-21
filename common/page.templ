@@ -1,0 +1,31 @@
+package common
+
+import "github.com/doors-dev/doors"
+
+// all our pages must be of this shape
+type Page interface {
+	// method returns component for head insertion
+	Head() templ.Component
+	// method returns component for body insertion
+	Body() templ.Component
+}
+
+// now page template that takes `Page` as arg
+templ Template(p Page) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<meta name="color-scheme" content="light dark"/>
+			// IMPORTANT: include framework script
+			@doors.Include()
+			// render page head
+			@p.Head()
+		</head>
+		<body>
+			// render page content
+			@p.Body()
+		</body>
+	</html>
+}
