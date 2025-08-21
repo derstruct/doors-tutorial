@@ -15,9 +15,8 @@ templ (c *catalogPage) Head() {
 	<title>catalog</title>
 }
 
-templ (c *catalogPage) Body() {
-    // subscribe helper component, updates node based on func output
-	@doors.Sub(c.path, func(p Path) templ.Component {
+func (c *catalogPage) Body() templ.Component {
+	return doors.Sub(c.path, func(p Path) templ.Component {
 		if p.IsMain {
 			return main()
 		}
@@ -25,10 +24,9 @@ templ (c *catalogPage) Body() {
 	})
 }
 
-
 func (c *catalogPage) Render(b doors.SourceBeam[Path]) templ.Component {
-    c.path = b
-    return common.Template(c)
+	c.path = b
+	return common.Template(c)
 }
 
 func Handler(p doors.PageRouter[Path], r doors.RPage[Path]) doors.PageRoute {
