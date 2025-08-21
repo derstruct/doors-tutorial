@@ -9,7 +9,6 @@ type CatalogPath struct {
 	Page   *int `query:"page"` // query param for pagination (used pointer to avoid showing 0 default value)
 }
 
-// prev one, keep it
 type HomePath struct {
 	Main bool `path:"/"`
 }

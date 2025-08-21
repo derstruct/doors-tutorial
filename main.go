@@ -13,7 +13,6 @@ func main() {
 
 	r.Use(
 		doors.UsePage(home.Handler),
-		// our new catalog page
 		doors.UsePage(catalog.Handler),
 	)
 

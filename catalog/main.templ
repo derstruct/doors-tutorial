@@ -1,0 +1,15 @@
+package catalog
+
+import "github.com/doors-dev/doors"
+
+templ main() {
+	<h1>Catalog</h1>
+	// href to  test category page
+	@doors.AHref{
+		Model: Path{
+			IsCat: true,
+			CatId: "test_cat",
+		},
+	}
+	<a class="contrast">Test Category</a>
+}

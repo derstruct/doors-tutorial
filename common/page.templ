@@ -15,15 +15,12 @@ templ Template(p Page) {
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<meta name="color-scheme" content="light dark"/>
 			@doors.Include()
-			// same as <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
-			// but adds CSP headers (useful if you enable CSP later), please refer to docs/ref/imports.md for details
 			@doors.ImportStyleExternal{
 				Href: "https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css",
 			}
 			@p.Head()
 		</head>
 		<body>
-			// PicoCSS container
 			<main class="container">
 				// menu component
 				@menu()
