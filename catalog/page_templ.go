@@ -49,8 +49,14 @@ func (c *catalogPage) Head() templ.Component {
 }
 
 func (c *catalogPage) Body() templ.Component {
-	return doors.Sub(c.path, func(p Path) templ.Component {
-		if p.IsMain {
+	// derive beam, that will only trigger updates when
+	// we change from/to main variant. It does not depend
+	// on page query param or item ID.
+	b := doors.NewBeam(c.path, func(p Path) bool {
+		return p.IsMain
+	})
+	return doors.Sub(b, func(isMain bool) templ.Component {
+		if isMain {
 			return main()
 		}
 		return category()
