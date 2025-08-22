@@ -4,6 +4,8 @@ import "github.com/doors-dev/doors"
 
 import "github.com/derstruct/doors-tutorial/driver"
 
+import "github.com/derstruct/doors-tutorial/common"
+
 func category(path doors.SourceBeam[Path]) templ.Component {
 	// doors.F - fragment renderer, also can be used in templates @doors.F(doors.Fragment)
 	return doors.F(&categoryFragment{
@@ -38,6 +40,9 @@ templ (f *categoryFragment) content(catId string) {
 			<h1>{ cat.Name }</h1>
 			<p>{ cat.Desc } </p>
 		</hgroup>
+		if common.IsAuthorized(ctx) {
+			<button class="contrast">Add Item</button>
+		}
 	} else {
 		<div>
 			<mark>Not Found</mark>
