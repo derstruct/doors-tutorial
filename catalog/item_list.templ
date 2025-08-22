@@ -15,7 +15,7 @@ func itemList(cat driver.Cat, path doors.SourceBeam[Path]) templ.Component {
 			if p.Page == nil {
 				return 0
 			}
-            // protect from negative values
+			// protect from negative values
 			return max(*p.Page, 0)
 		}),
 	})
@@ -44,14 +44,14 @@ templ (f *itemListFragment) Render() {
 					<div>
 						for i, item := range items {
 							if i % 2 == 0 {
-								@f.item(item)
+								@f.item(item, page)
 							}
 						}
 					</div>
 					<div>
 						for i, item := range items {
 							if i % 2 == 1 {
-								@f.item(item)
+								@f.item(item, page)
 							}
 						}
 					</div>
@@ -61,7 +61,7 @@ templ (f *itemListFragment) Render() {
 	</div>
 }
 
-templ (f *itemListFragment) item(item driver.Item) {
+templ (f *itemListFragment) item(item driver.Item, page int) {
 	<article>
 		<header>
 			@doors.AHref{
@@ -69,6 +69,12 @@ templ (f *itemListFragment) item(item driver.Item) {
 					IsItem: true,
 					CatId:  item.Cat,
 					ItemId: item.Id,
+					Page: func() *int {
+						if page == 0 {
+							return nil
+						}
+						return &page
+					}(),
 				},
 			}
 			<a>{ item.Name }</a>
