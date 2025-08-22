@@ -15,7 +15,8 @@ func itemList(cat driver.Cat, path doors.SourceBeam[Path]) templ.Component {
 			if p.Page == nil {
 				return 0
 			}
-			return min(*p.Page, 0)
+            // protect from negative values
+			return max(*p.Page, 0)
 		}),
 	})
 }

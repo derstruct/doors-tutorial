@@ -23,7 +23,8 @@ func itemList(cat driver.Cat, path doors.SourceBeam[Path]) templ.Component {
 			if p.Page == nil {
 				return 0
 			}
-			return min(*p.Page, 0)
+			// protect from negative values
+			return max(*p.Page, 0)
 		}),
 	})
 }
@@ -172,7 +173,7 @@ func (f *itemListFragment) item(item driver.Item) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `catalog/item_list.templ`, Line: 73, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `catalog/item_list.templ`, Line: 74, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
