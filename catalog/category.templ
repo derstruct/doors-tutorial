@@ -41,7 +41,9 @@ templ (f *categoryFragment) content(catId string) {
 			<p>{ cat.Desc } </p>
 		</hgroup>
 		if common.IsAuthorized(ctx) {
-			<button class="contrast">Add Item</button>
+			<p>
+				<button class="contrast">Add Item</button>
+			</p>
 		}
 	} else {
 		<div>
