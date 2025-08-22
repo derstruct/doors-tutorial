@@ -21,6 +21,7 @@ type categoryFragment struct {
 
 templ (f *categoryFragment) Render() {
 	@f.style()
+	@itemCard(f.path, f.items.Reload)
 	<div class="category">
 		<aside>
 			@f.nav()
@@ -36,6 +37,7 @@ templ (f *categoryFragment) Render() {
 }
 
 templ (f *categoryFragment) content(catId string) {
+    // render component 
 	{{ cat, ok := driver.Cats.Get(catId) }}
 	if ok {
 		<hgroup>
