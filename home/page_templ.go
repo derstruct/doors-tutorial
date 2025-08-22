@@ -8,16 +8,20 @@ package home
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/doors-dev/doors"
+import (
+	"context"
+	"github.com/derstruct/doors-tutorial/common"
+	"github.com/derstruct/doors-tutorial/driver"
+	"github.com/doors-dev/doors"
+	"net/http"
+)
 
-import "github.com/derstruct/doors-tutorial/common"
-
-// alias path for ease of use
 type Path = common.HomePath
 
-type homePage struct{}
+type homePage struct {
+	session *driver.Session
+}
 
-// implement common.Page interface
 func (h *homePage) Head() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -68,16 +72,53 @@ func (h *homePage) Body() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<h1>Yeah!</h1>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if h.session == nil {
+			templ_7745c5c3_Err = login().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<h1>Welcome <strong>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var3 string
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(h.session.Login)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `home/page.templ`, Line: 25, Col: 39}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</strong>!</h1>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = doors.AClick{
+				On: func(ctx context.Context, r doors.REvent[doors.PointerEvent]) bool {
+					r.SetCookie(&http.Cookie{
+						Name:   "session",
+						Path:   "/",
+						MaxAge: -1,
+					})
+					driver.Sessions.Remove(h.session.Token)
+					doors.SessionEnd(ctx)
+					return true
+				},
+			}.Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " <button class=\"secondary\">Log Out</button>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		return nil
 	})
 }
 
-// Render method is neccessary for page declaration.
-// doors.SourceBeam is used to subscribe to path changes (in case of home page there are no parameters or path variants, so we won't use it)
 func (p *homePage) Render(_ doors.SourceBeam[Path]) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -94,9 +135,9 @@ func (p *homePage) Render(_ doors.SourceBeam[Path]) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = common.Template(p).Render(ctx, templ_7745c5c3_Buffer)
@@ -107,11 +148,10 @@ func (p *homePage) Render(_ doors.SourceBeam[Path]) templ.Component {
 	})
 }
 
-// we also need a handler function to serve our home page when the path matches Path
-// pr provides routing options, r - http request wrapper
 func Handler(p doors.PageRouter[Path], r doors.RPage[Path]) doors.PageRoute {
-	// just serve our home page
-	return p.Page(&homePage{})
+	return p.Page(&homePage{
+		session: common.GetSession(r),
+	})
 }
 
 var _ = templruntime.GeneratedTemplate
