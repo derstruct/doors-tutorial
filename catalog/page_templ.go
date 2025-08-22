@@ -9,14 +9,18 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"context"
 	"github.com/derstruct/doors-tutorial/common"
+	"github.com/derstruct/doors-tutorial/driver"
 	"github.com/doors-dev/doors"
 )
 
 type Path = common.CatalogPath
 
 type catalogPage struct {
-	path doors.SourceBeam[Path]
+	// session property
+	session *driver.Session
+	path    doors.SourceBeam[Path]
 }
 
 func (c *catalogPage) Head() templ.Component {
@@ -49,17 +53,22 @@ func (c *catalogPage) Head() templ.Component {
 }
 
 func (c *catalogPage) Body() templ.Component {
-	// derive beam, that will only trigger updates when
-	// we change from/to main variant. It does not depend
-	// on page query param or item ID.
-	b := doors.NewBeam(c.path, func(p Path) bool {
-		return p.IsMain
-	})
-	return doors.Sub(b, func(isMain bool) templ.Component {
-		if isMain {
-			return main()
-		}
-		return category(c.path)
+	// wrap in "Evaluate" component to get access to the context
+	return doors.E(func(ctx context.Context) templ.Component {
+
+		// insert session
+		common.StoreSession(ctx, c.session)
+
+		// everyting else is same
+		b := doors.NewBeam(c.path, func(p Path) bool {
+			return p.IsMain
+		})
+		return doors.Sub(b, func(isMain bool) templ.Component {
+			if isMain {
+				return main()
+			}
+			return category(c.path)
+		})
 	})
 }
 
@@ -69,7 +78,9 @@ func (c *catalogPage) Render(b doors.SourceBeam[Path]) templ.Component {
 }
 
 func Handler(p doors.PageRouter[Path], r doors.RPage[Path]) doors.PageRoute {
-	return p.Page(&catalogPage{})
+	return p.Page(&catalogPage{
+		session: common.GetSession(r),
+	})
 }
 
 var _ = templruntime.GeneratedTemplate
