@@ -1,0 +1,106 @@
+package catalog
+
+import (
+	"context"
+	"github.com/derstruct/doors-tutorial/driver"
+	"github.com/doors-dev/doors"
+)
+
+// add reload dependency
+func createItem(cat driver.Cat, reload func(context.Context)) templ.Component {
+	return doors.F(&createItemFragment{
+		cat:    cat,
+		open:   doors.NewADyn("open", "", false),
+		reload: reload,
+	})
+}
+
+type createItemFragment struct {
+	cat  driver.Cat
+	open doors.ADyn
+	// reload func
+	reload func(context.Context)
+}
+
+// main render function
+templ (f *createItemFragment) Render() {
+	// render form in closed state
+	@f.form()
+	@doors.AClick{
+		Scope: doors.ScopeBlocking(),
+		On: func(ctx context.Context, _ doors.REvent[doors.PointerEvent]) bool {
+			// display form with dynamic attribute
+			f.open.Enable(ctx, true)
+			return false
+		},
+	}
+	<button class="contrast">
+		Add Item
+	</button>
+}
+
+// form data for decoding
+type itemFormData struct {
+	Name string `form:"name"`
+	Desc string `form:"desc"`
+}
+
+func (f *createItemFragment) submit(ctx context.Context, r doors.RForm[itemFormData]) bool {
+	item := driver.Item{
+		Name:   r.Data().Name,
+		Desc:   r.Data().Desc,
+		Cat:    f.cat.Id,
+		Rating: 0,
+	}
+	// create item entry
+	driver.Items.Create(item)
+	//reload (will also close form)
+	f.reload(ctx)
+	// remove hook
+	return true
+}
+
+templ (f *createItemFragment) form() {
+	// attach attribute
+	@f.open
+	// remove "open" attribute (closed state)
+	<dialog>
+		<article>
+			<header>
+				@doors.AClick{
+					On: func(ctx context.Context, _ doors.REvent[doors.PointerEvent]) bool {
+						// hide form
+						f.open.Enable(ctx, false)
+						// keep hook active
+						return false
+					},
+				}
+				<button aria-label="Close" rel="prev"></button>
+				<p>
+					<strong>Add New Item To <strong>{ f.cat.Name }</strong></strong>
+				</p>
+			</header>
+			// add submit handler
+			@doors.ASubmit[itemFormData]{
+				// indicate pending state on the button
+				Indicator: doors.IndicatorAttrQuery("#item-create", "aria-busy", "true"),
+				// block rapid resubmittion
+				Scope: doors.ScopeBlocking(),
+				On:    f.submit,
+			}
+			<form>
+				<fieldset>
+					<label>
+						Name
+						<input name="name"/>
+					</label>
+					<label>
+						Description
+						<textarea name="desc"></textarea>
+					</label>
+				</fieldset>
+				<button id="item-create" role="submit">Add</button>
+			</form>
+		</article>
+	</dialog>
+}
