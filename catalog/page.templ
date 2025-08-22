@@ -15,18 +15,80 @@ type catalogPage struct {
 	path    doors.SourceBeam[Path]
 }
 
-templ (c *catalogPage) Head() {
-	<title>catalog</title>
+// state that title depends on
+type pathState struct {
+	Cat  string
+	Item int
+}
+
+func (c *catalogPage) Head() templ.Component {
+	// derive new beam with pathState
+	state := doors.NewBeam(c.path, func(p Path) pathState {
+		if p.IsMain {
+			return pathState{
+				Cat:  "",
+				Item: -1,
+			}
+		}
+		if p.IsCat {
+			return pathState{
+				Cat:  p.CatId,
+				Item: -1,
+			}
+		}
+		return pathState{
+			Cat:  p.CatId,
+			Item: p.ItemId,
+		}
+	})
+	// head component, takes path beam and function to derive HeadData
+	return doors.Head(state, func(ps pathState) doors.HeadData {
+		// no category selected
+		if ps.Cat == "" {
+			return doors.HeadData{
+				Title: "Catalog",
+			}
+		}
+		cat, ok := driver.Cats.Get(ps.Cat)
+		// cat not found
+		if !ok {
+			return doors.HeadData{
+				Title: "Category Not Found",
+			}
+		}
+		// category page
+		if ps.Item == -1 {
+			return doors.HeadData{
+				Title: cat.Name,
+				Meta: map[string]string{
+					"description": cat.Desc,
+				},
+			}
+		}
+		item, ok := driver.Items.Get(ps.Item)
+		// item not found
+		if !ok {
+			return doors.HeadData{
+				Title: "Item Not Found",
+			}
+		}
+		return doors.HeadData{
+			Title: item.Name,
+			Meta: map[string]string{
+				"description": item.Desc,
+			},
+		}
+	})
 }
 
 func (c *catalogPage) Body() templ.Component {
 	// wrap in "Evaluate" component to get access to the context
 	return doors.E(func(ctx context.Context) templ.Component {
 
-        // insert session
+		// insert session
 		common.StoreSession(ctx, c.session)
 
-        // everyting else is same
+		// everyting else is same
 		b := doors.NewBeam(c.path, func(p Path) bool {
 			return p.IsMain
 		})
