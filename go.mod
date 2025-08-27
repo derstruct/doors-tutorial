@@ -3,8 +3,8 @@ module github.com/derstruct/doors-tutorial
 go 1.24.6
 
 require (
-	github.com/a-h/templ v0.3.924
-	github.com/doors-dev/doors v0.3.0
+	github.com/a-h/templ v0.3.943
+	github.com/doors-dev/doors v0.3.8
 )
 
 require (
@@ -16,7 +16,7 @@ require (
 	github.com/tdewolff/minify/v2 v2.23.3 // indirect
 	github.com/tdewolff/parse/v2 v2.8.1 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
-	golang.org/x/net v0.39.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 )
