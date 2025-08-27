@@ -44,9 +44,9 @@ func Template(p Page) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = doors.Imports(doors.ImportStyleExternal{
+		templ_7745c5c3_Err = doors.ImportStyleExternal{
 			Href: "https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css",
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		}.Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
