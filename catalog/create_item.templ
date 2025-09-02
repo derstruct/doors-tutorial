@@ -1,0 +1,92 @@
+package catalog
+
+import (
+	"context"
+	"github.com/derstruct/doors-tutorial/driver"
+	"github.com/doors-dev/doors"
+)
+
+func createItem(cat driver.Cat, reload func(context.Context)) templ.Component {
+	return doors.F(&createItemFragment{
+		cat:    cat,
+		open:   doors.NewADyn("open", "", false),
+		reload: reload,
+	})
+}
+
+type createItemFragment struct {
+	cat    driver.Cat
+	open   doors.ADyn
+	reload func(context.Context)
+}
+
+templ (f *createItemFragment) Render() {
+	@f.form()
+	@doors.AClick{
+		Scope: doors.ScopeBlocking(),
+		On: func(ctx context.Context, _ doors.REvent[doors.PointerEvent]) bool {
+			f.open.Enable(ctx, true)
+			return false
+		},
+	}
+	<button class="contrast">
+		Add Item
+	</button>
+}
+
+type itemFormData struct {
+	Name string `form:"name"`
+	Desc string `form:"desc"`
+}
+
+func (f *createItemFragment) submit(ctx context.Context, r doors.RForm[itemFormData]) bool {
+	item := driver.Item{
+		Name:   r.Data().Name,
+		Desc:   r.Data().Desc,
+		Cat:    f.cat.Id,
+		Rating: 0,
+	}
+	driver.Items.Create(item)
+	f.reload(ctx)
+	return true
+}
+
+templ (f *createItemFragment) form() {
+	@f.open
+	<dialog>
+		<article>
+			<header>
+				@doors.AClick{
+					On: func(ctx context.Context, _ doors.REvent[doors.PointerEvent]) bool {
+						// hide form
+						f.open.Enable(ctx, false)
+						// keep hook active
+						return false
+					},
+				}
+				<button aria-label="Close" rel="prev"></button>
+				<p>
+					<strong>Add New Item To <strong>{ f.cat.Name }</strong></strong>
+				</p>
+			</header>
+			@doors.ASubmit[itemFormData]{
+				Indicator: doors.IndicatorAttrQuery("#item-create", "aria-busy", "true"),
+				Scope:     doors.ScopeBlocking(),
+				On:        f.submit,
+			}
+			<form>
+				<fieldset>
+					<label>
+						Name
+						<input name="name"/>
+					</label>
+					<label>
+						Description
+						<textarea name="desc"></textarea>
+					</label>
+				</fieldset>
+				<button id="item-create" role="submit">Add</button>
+			</form>
+		</article>
+	</dialog>
+}

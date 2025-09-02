@@ -14,7 +14,8 @@ func category(path doors.SourceBeam[Path]) templ.Component {
 }
 
 type categoryFragment struct {
-	path doors.SourceBeam[Path]
+	path  doors.SourceBeam[Path]
+	items doors.Door
 }
 
 templ (f *categoryFragment) Render() {
@@ -40,15 +41,18 @@ templ (f *categoryFragment) content(catId string) {
 			<h1>{ cat.Name }</h1>
 			<p>{ cat.Desc } </p>
 		</hgroup>
-		if common.IsAuthorized(ctx) {
-			<p>
-				<button class="contrast">Add Item</button>
-			</p>
+		@f.items {
+			if common.IsAuthorized(ctx) {
+				<p>
+					@createItem(cat, f.items.Reload)
+				</p>
+			}
+			@itemList(cat, f.path)
 		}
 	} else {
 		@doors.Status(http.StatusNotFound)
 		<div>
-            <h1>Not Found</h1>
+			<h1>Not Found</h1>
 		</div>
 	}
 }

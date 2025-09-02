@@ -1,0 +1,79 @@
+package catalog
+
+import (
+	"github.com/derstruct/doors-tutorial/driver"
+	"github.com/doors-dev/doors"
+)
+
+func itemList(cat driver.Cat, path doors.SourceBeam[Path]) templ.Component {
+	return doors.F(&itemListFragment{
+		cat:  cat,
+		path: path,
+		page: doors.NewBeam(path, func(p Path) int {
+			if p.Page == nil {
+				return 0
+			}
+			return max(*p.Page, 0)
+		}),
+	})
+}
+
+type itemListFragment struct {
+	cat  driver.Cat
+	path doors.SourceBeam[Path]
+	page doors.Beam[int]
+}
+
+templ (f *itemListFragment) Render() {
+	<div>
+		@doors.Inject("page", f.page) {
+			{{ page := ctx.Value("page").(int) }}
+			{{ items := driver.Items.List(f.cat.Id, page) }}
+			if len(items) == 0 {
+				No Items 
+			} else {
+				<div class="grid">
+					<div>
+						for i, item := range items {
+							if i % 2 == 0 {
+								@f.item(item, page)
+							}
+						}
+					</div>
+					<div>
+						for i, item := range items {
+							if i % 2 == 1 {
+								@f.item(item, page)
+							}
+						}
+					</div>
+				</div>
+			}
+		}
+	</div>
+}
+
+templ (f *itemListFragment) item(item driver.Item, page int) {
+	<article>
+		<header>
+			@doors.AHref{
+				Model: Path{
+					IsItem: true,
+					CatId:  item.Cat,
+					ItemId: item.Id,
+					Page: func() *int {
+						if page == 0 {
+							return nil
+						}
+						return &page
+					}(),
+				},
+			}
+			<a>{ item.Name }</a>
+		</header>
+		<kbd>
+			Rating 
+			@doors.Text(item.Rating)
+		</kbd>
+	</article>
+}
