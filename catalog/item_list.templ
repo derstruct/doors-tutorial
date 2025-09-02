@@ -50,7 +50,47 @@ templ (f *itemListFragment) Render() {
 				</div>
 			}
 		}
+		@f.pagination()
 	</div>
+}
+
+templ (f *itemListFragment) pagination() {
+	@doors.Style() {
+		<style>
+            .item-pages {
+                display: flex;
+                justify-content: start;
+                gap: 1rem;
+            }
+        </style>
+	}
+	<div class="item-pages">
+		for i := range driver.Items.CountPages(f.cat.Id) {
+			@f.pageHref(i)
+			<a class="secondary">
+				@doors.Text(i + 1)
+			</a>
+		}
+	</div>
+}
+
+func (f *itemListFragment) pageHref(page int) doors.Attr {
+	var p *int = nil
+	if page != 0 {
+		p = &page
+	}
+	return doors.AHref{
+		Active: doors.Active{
+			Indicator: doors.IndicatorAttr("aria-current", "true"),
+			PathMatcher: doors.PathMatcherStarts(),
+			QueryMatcher: doors.QueryMatcherSome("page"),
+		},
+		Model: Path{
+			IsCat: true,
+			CatId: f.cat.Id,
+			Page:  p,
+		},
+	}
 }
 
 templ (f *itemListFragment) item(item driver.Item, page int) {

@@ -78,15 +78,6 @@ func (c *cardFragment) Render() templ.Component {
 	})
 }
 
-func (c *cardFragment) closeCard(ctx context.Context) {
-	c.reload(ctx)
-	c.path.Mutate(ctx, func(p Path) Path {
-		p.IsCat = true
-		p.IsItem = false
-		return p
-	})
-}
-
 func (c *cardFragment) card(id int) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -110,7 +101,6 @@ func (c *cardFragment) card(id int) templ.Component {
 		ctx = templ.ClearChildren(ctx)
 		item, ok := driver.Items.Get(id)
 		templ_7745c5c3_Err = doors.APointerDown{
-			// ignore bubbling events, target only
 			ExactTarget: true,
 			On: func(ctx context.Context, r doors.REvent[doors.PointerEvent]) bool {
 				c.closeCard(ctx)
@@ -145,7 +135,7 @@ func (c *cardFragment) card(id int) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `catalog/item_card.templ`, Line: 77, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `catalog/item_card.templ`, Line: 67, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -177,7 +167,7 @@ func (c *cardFragment) card(id int) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(item.Desc)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `catalog/item_card.templ`, Line: 86, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `catalog/item_card.templ`, Line: 76, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -201,6 +191,15 @@ func (c *cardFragment) card(id int) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		return nil
+	})
+}
+
+func (c *cardFragment) closeCard(ctx context.Context) {
+	c.reload(ctx)
+	c.path.Mutate(ctx, func(p Path) Path {
+		p.IsCat = true
+		p.IsItem = false
+		return p
 	})
 }
 
