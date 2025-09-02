@@ -56,7 +56,7 @@ func (c *catalogPage) Body() templ.Component {
 		if isMain {
 			return main()
 		}
-		return category()
+		return category(c.path)
 	})
 }
 
