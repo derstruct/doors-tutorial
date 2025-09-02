@@ -1,0 +1,94 @@
+package catalog
+
+import (
+	"context"
+	"github.com/derstruct/doors-tutorial/driver"
+	"github.com/doors-dev/doors"
+	"net/http"
+)
+
+// path to show card when user clicks the link
+// reload to update items list after card is closed
+func itemCard(path doors.SourceBeam[Path], reload func(context.Context)) templ.Component {
+	return doors.F(&cardFragment{
+		path:   path,
+		reload: reload,
+	})
+}
+
+type cardFragment struct {
+	path    doors.SourceBeam[Path]
+	reload  func(context.Context)
+	content doors.Door
+}
+
+templ (c *cardFragment) Render() {
+	@doors.Run(func(ctx context.Context) {
+		itemId := doors.NewBeam(c.path, func(p Path) int {
+			if !p.IsItem {
+				return -1
+			}
+			return p.ItemId
+		})
+		itemId.Sub(ctx, func(ctx context.Context, id int) bool {
+			if id == -1 {
+				c.content.Clear(ctx)
+				return false
+			}
+			c.content.Update(ctx, c.card(id))
+			return false
+		})
+	})
+	@c.content
+}
+
+
+templ (c *cardFragment) card(id int) {
+	{{ item, ok := driver.Items.Get(id) }}
+	@doors.APointerDown{
+		ExactTarget: true,
+		On: func(ctx context.Context, r doors.REvent[doors.PointerEvent]) bool {
+			c.closeCard(ctx)
+			return true
+		},
+	}
+	<dialog open>
+		<article>
+			<header>
+				@doors.AClick{
+					On: func(ctx context.Context, _ doors.REvent[doors.PointerEvent]) bool {
+						c.closeCard(ctx)
+						return true
+					},
+				}
+				<button aria-label="Close" rel="prev"></button>
+				<p>
+					if ok {
+						<strong>{ item.Name }</strong>
+					} else {
+						@doors.Status(http.StatusNotFound)
+						<strong>Item Not Found</strong>
+					}
+				</p>
+			</header>
+			if ok {
+				<p>
+					{ item.Desc }
+				</p>
+				<kbd>
+					Rating: 
+					@doors.Text(item.Rating)
+				</kbd>
+			}
+		</article>
+	</dialog>
+}
+
+func (c *cardFragment) closeCard(ctx context.Context) {
+	c.reload(ctx)
+	c.path.Mutate(ctx, func(p Path) Path {
+		p.IsCat = true
+		p.IsItem = false
+		return p
+	})
+}

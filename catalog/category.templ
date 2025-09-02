@@ -20,6 +20,7 @@ type categoryFragment struct {
 
 templ (f *categoryFragment) Render() {
 	@f.style()
+    @itemCard(f.path, f.items.Reload)
 	<div class="category">
 		<aside>
 			@f.nav()
