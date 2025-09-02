@@ -5,6 +5,7 @@ go 1.24.6
 require (
 	github.com/a-h/templ v0.3.943
 	github.com/doors-dev/doors v0.4.1
+	github.com/mattn/go-sqlite3 v1.14.32
 )
 
 require (

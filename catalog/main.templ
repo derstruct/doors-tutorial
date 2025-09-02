@@ -1,15 +1,24 @@
 package catalog
 
-import "github.com/doors-dev/doors"
+import (
+	"github.com/derstruct/doors-tutorial/driver"
+	"github.com/doors-dev/doors"
+)
 
 templ main() {
 	<h1>Catalog</h1>
-	// href to  test category page
-	@doors.AHref{
-		Model: Path{
-			IsCat: true,
-			CatId: "test_cat",
-		},
+	for _, cat := range driver.Cats.List() {
+		<article>
+			<header>
+				@doors.AHref{
+					Model: Path{
+						IsCat: true,
+						CatId: cat.Id,
+					},
+				}
+				<a class="contrast">{ cat.Name }</a>
+			</header>
+			{ cat.Desc }
+		</article>
 	}
-	<a class="contrast">Test Category</a>
 }
