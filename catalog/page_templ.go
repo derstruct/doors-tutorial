@@ -22,32 +22,62 @@ type catalogPage struct {
 	session *driver.Session
 }
 
+type metaState struct {
+	Cat  string
+	Item int
+}
+
 func (c *catalogPage) Head() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
+	state := doors.NewBeam(c.path, func(p Path) metaState {
+		if p.IsMain {
+			return metaState{
+				Cat:  "",
+				Item: -1,
+			}
 		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
+		if p.IsCat {
+			return metaState{
+				Cat:  p.CatId,
+				Item: -1,
+			}
 		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var1 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var1 == nil {
-			templ_7745c5c3_Var1 = templ.NopComponent
+		return metaState{
+			Cat:  p.CatId,
+			Item: p.ItemId,
 		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<title>catalog</title>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+	})
+	return doors.Head(state, func(m metaState) doors.HeadData {
+		if m.Cat == "" {
+			return doors.HeadData{
+				Title: "Catalog",
+			}
 		}
-		return nil
+		cat, ok := driver.Cats.Get(m.Cat)
+		if !ok {
+			return doors.HeadData{
+				Title: "Category Not Found",
+			}
+		}
+		if m.Item == -1 {
+			return doors.HeadData{
+				Title: cat.Name,
+				Meta: map[string]string{
+					"description": cat.Desc,
+				},
+			}
+		}
+		item, ok := driver.Items.Get(m.Item)
+		if !ok {
+			return doors.HeadData{
+				Title: "Item Not Found",
+			}
+		}
+		return doors.HeadData{
+			Title: item.Name,
+			Meta: map[string]string{
+				"description": item.Desc,
+			},
+		}
 	})
 }
 
@@ -89,9 +119,9 @@ func (c *catalogPage) Render(b doors.SourceBeam[Path]) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var2 == nil {
-			templ_7745c5c3_Var2 = templ.NopComponent
+		templ_7745c5c3_Var1 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var1 == nil {
+			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = common.Template(c).Render(ctx, templ_7745c5c3_Buffer)

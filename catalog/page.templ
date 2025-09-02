@@ -14,8 +14,63 @@ type catalogPage struct {
 	session *driver.Session
 }
 
-templ (c *catalogPage) Head() {
-	<title>catalog</title>
+type metaState struct {
+	Cat  string
+	Item int
+}
+
+func (c *catalogPage) Head() templ.Component {
+	state := doors.NewBeam(c.path, func(p Path) metaState {
+		if p.IsMain {
+			return metaState{
+				Cat:  "",
+				Item: -1,
+			}
+		}
+		if p.IsCat {
+			return metaState{
+				Cat:  p.CatId,
+				Item: -1,
+			}
+		}
+		return metaState{
+			Cat:  p.CatId,
+			Item: p.ItemId,
+		}
+	})
+	return doors.Head(state, func(m metaState) doors.HeadData {
+		if m.Cat == "" {
+			return doors.HeadData{
+				Title: "Catalog",
+			}
+		}
+		cat, ok := driver.Cats.Get(m.Cat)
+		if !ok {
+			return doors.HeadData{
+				Title: "Category Not Found",
+			}
+		}
+		if m.Item == -1 {
+			return doors.HeadData{
+				Title: cat.Name,
+				Meta: map[string]string{
+					"description": cat.Desc,
+				},
+			}
+		}
+		item, ok := driver.Items.Get(m.Item)
+		if !ok {
+			return doors.HeadData{
+				Title: "Item Not Found",
+			}
+		}
+		return doors.HeadData{
+			Title: item.Name,
+			Meta: map[string]string{
+				"description": item.Desc,
+			},
+		}
+	})
 }
 
 func (c *catalogPage) Body() templ.Component {
