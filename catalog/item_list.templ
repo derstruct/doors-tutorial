@@ -1,115 +1,127 @@
 package catalog
 
 import (
+	"context"
 	"github.com/derstruct/doors-tutorial/driver"
 	"github.com/doors-dev/doors"
 )
 
+type pageState struct {
+	current int
+	last    bool
+}
+
 func itemList(cat driver.Cat, path doors.SourceBeam[Path]) templ.Component {
+	page := doors.NewBeam(path, func(p Path) int {
+		if p.Page == nil {
+			return 0
+		}
+		return max(*p.Page, 0)
+	})
+	state := doors.NewBeam(page, func(p int) pageState {
+		maxPage := driver.Items.CountPages(cat.Id) - 1 // if max = -1, means no pages to show
+		current := min(p, maxPage)
+		return pageState{
+			current: current,
+			last:    maxPage == current,
+		}
+	})
+
 	return doors.F(&itemListFragment{
 		cat:  cat,
 		path: path,
-		page: doors.NewBeam(path, func(p Path) int {
-			if p.Page == nil {
-				return 0
-			}
-			return max(*p.Page, 0)
-		}),
+		page: state,
 	})
 }
 
 type itemListFragment struct {
-	cat  driver.Cat
-	path doors.SourceBeam[Path]
-	page doors.Beam[int]
+	cat         driver.Cat
+	path        doors.SourceBeam[Path]
+	page        doors.Beam[pageState]
+	placeHolder doors.Door
 }
 
 templ (f *itemListFragment) Render() {
-	<div>
-		@doors.Inject("page", f.page) {
-			{{ page := ctx.Value("page").(int) }}
-			{{ items := driver.Items.List(f.cat.Id, page) }}
-			if len(items) == 0 {
-				No Items 
-			} else {
-				<div class="grid">
-					<div>
-						for i, item := range items {
-							if i % 2 == 0 {
-								@f.item(item, page)
-							}
-						}
-					</div>
-					<div>
-						for i, item := range items {
-							if i % 2 == 1 {
-								@f.item(item, page)
-							}
-						}
-					</div>
-				</div>
+	@doors.Run(func(ctx context.Context) {
+		loadedPage := -1
+		f.page.Sub(ctx, func(ctx context.Context, ps pageState) bool {
+			if ps.current == -1 && loadedPage == -1 {
+				f.placeHolder.Update(ctx, doors.Text("No Items"))
+				return false
 			}
+			if loadedPage >= ps.current {
+				return false
+			}
+			from := loadedPage + 1
+			loadedPage = ps.current
+			f.placeHolder.Replace(ctx, f.pages(from, loadedPage))
+			return false
+		})
+	})
+	@f.placeHolder
+	@doors.Sub(f.page, func(ps pageState) templ.Component {
+		if ps.last {
+			return nil
 		}
-		@f.pagination()
-	</div>
+		return f.loadMore(ps.current + 1)
+	})
 }
 
-templ (f *itemListFragment) pagination() {
-	@doors.Style() {
-		<style>
-            .item-pages {
-                display: flex;
-                justify-content: start;
-                gap: 1rem;
-            }
-        </style>
-	}
-	<div class="item-pages">
-		for i := range driver.Items.CountPages(f.cat.Id) {
-			@f.pageHref(i)
-			<a class="secondary">
-				@doors.Text(i + 1)
-			</a>
-		}
-	</div>
-}
-
-func (f *itemListFragment) pageHref(page int) doors.Attr {
-	var p *int = nil
-	if page != 0 {
-		p = &page
-	}
-	return doors.AHref{
-		Active: doors.Active{
-			Indicator: doors.IndicatorAttr("aria-current", "true"),
-			PathMatcher: doors.PathMatcherStarts(),
-			QueryMatcher: doors.QueryMatcherSome("page"),
-		},
+templ (f *itemListFragment) loadMore(next int) {
+	@doors.AHref{
 		Model: Path{
 			IsCat: true,
 			CatId: f.cat.Id,
-			Page:  p,
+			Page:  &next,
 		},
 	}
+	<a role="button" class="contrast">Load More</a>
 }
 
-templ (f *itemListFragment) item(item driver.Item, page int) {
+templ (f *itemListFragment) pages(start int, end int) {
+	for page := start; page <= end; page++ {
+		{{ items := driver.Items.List(f.cat.Id, page) }}
+		<div class="grid">
+			<div>
+				for i, item := range items {
+					if i % 2 == 0 {
+						@f.item(item)
+					}
+				}
+			</div>
+			<div>
+				for i, item := range items {
+					if i % 2 == 1 {
+						@f.item(item)
+					}
+				}
+			</div>
+		</div>
+	}
+	{{ f.placeHolder.Clear(ctx) }}
+	@f.placeHolder
+}
+
+templ (f *itemListFragment) item(item driver.Item) {
 	<article>
 		<header>
-			@doors.AHref{
-				Model: Path{
-					IsItem: true,
-					CatId:  item.Cat,
-					ItemId: item.Id,
-					Page: func() *int {
-						if page == 0 {
-							return nil
-						}
-						return &page
-					}(),
-				},
+			@doors.Inject(0, f.page) {
+				{{ ps := ctx.Value(0).(pageState) }}
+				@doors.AHref{
+					Model: Path{
+						IsItem: true,
+						CatId:  item.Cat,
+						ItemId: item.Id,
+						Page: func() *int {
+							if ps.current == 0 {
+								return nil
+							}
+							return &ps.current
+						}(),
+					},
+				}
+				<a>{ item.Name }</a>
 			}
-			<a>{ item.Name }</a>
 		</header>
 		<kbd>
 			Rating 
