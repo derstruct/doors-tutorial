@@ -1,14 +1,104 @@
 package catalog
 
-import "github.com/doors-dev/doors"
+import (
+	"github.com/derstruct/doors-tutorial/common"
+	"github.com/derstruct/doors-tutorial/driver"
+	"github.com/doors-dev/doors"
+	"net/http"
+)
 
-templ category() {
-	<h1>Category</h1>
-	// href to go test category page
-	@doors.AHref{
-		Model: Path{
-			IsMain: true,
-		},
+func category(path doors.SourceBeam[Path]) templ.Component {
+	return doors.F(&categoryFragment{
+		path: path,
+	})
+}
+
+type categoryFragment struct {
+	path doors.SourceBeam[Path]
+}
+
+templ (f *categoryFragment) Render() {
+	@f.style()
+	<div class="category">
+		<aside>
+			@f.nav()
+		</aside>
+		<main>
+			@doors.Sub(doors.NewBeam(f.path, func(p Path) string {
+				return p.CatId
+			}), func(catId string) templ.Component {
+				return f.content(catId)
+			})
+		</main>
+	</div>
+}
+
+templ (f *categoryFragment) content(catId string) {
+	{{ cat, ok := driver.Cats.Get(catId) }}
+	if ok {
+		<hgroup>
+			<h1>{ cat.Name }</h1>
+			<p>{ cat.Desc } </p>
+		</hgroup>
+		if common.IsAuthorized(ctx) {
+			<p>
+				<button class="contrast">Add Item</button>
+			</p>
+		}
+	} else {
+		@doors.Status(http.StatusNotFound)
+		<div>
+            <h1>Not Found</h1>
+		</div>
 	}
-	<a class="contrast">Go back</a>
+}
+
+templ (d *categoryFragment) nav() {
+	<nav>
+		<ul>
+			<li>
+				@doors.AHref{
+					Model: Path{
+						IsMain: true,
+					},
+				}
+				<a class="secondary">Go back</a>
+			</li>
+			for _, cat := range driver.Cats.List() {
+				<li>
+					@doors.AHref{
+						Model: Path{
+							IsCat: true,
+							CatId: cat.Id,
+						},
+						Active: doors.Active{
+							Indicator:    doors.IndicatorAttr("aria-current", "page"),
+							PathMatcher:  doors.PathMatcherStarts(),
+							QueryMatcher: doors.QueryMatcherIgnore(),
+						},
+					}
+					<a class="contrast">{ cat.Name }</a>
+				</li>
+			}
+		</ul>
+	</nav>
+}
+
+templ (f *categoryFragment) style() {
+	@doors.Style() {
+		<style>
+            .category {
+                display: flex;
+                gap: calc(var(--pico-typography-spacing-vertical) * 3);
+            }
+
+            aside {
+                flex: 0 0 auto; 
+            }
+
+            main {
+                flex: 1;
+            }
+        </style>
+	}
 }

@@ -1,14 +1,17 @@
 package catalog
 
 import (
+	"context"
 	"github.com/derstruct/doors-tutorial/common"
+	"github.com/derstruct/doors-tutorial/driver"
 	"github.com/doors-dev/doors"
 )
 
 type Path = common.CatalogPath
 
 type catalogPage struct {
-	path doors.SourceBeam[Path]
+	path    doors.SourceBeam[Path]
+	session *driver.Session
 }
 
 templ (c *catalogPage) Head() {
@@ -16,22 +19,43 @@ templ (c *catalogPage) Head() {
 }
 
 func (c *catalogPage) Body() templ.Component {
-	b := doors.NewBeam(c.path, func(p Path) bool {
-		return p.IsMain
-	})
-	return doors.Sub(b, func(isMain bool) templ.Component {
-		if isMain {
-			return main()
-		}
-		return category()
+	// wrap in "Evaluate" component to get access to the context
+	return doors.E(func(ctx context.Context) templ.Component {
+
+        // insert session
+		common.StoreSession(ctx, c.session)
+
+        // everyting else is same
+		b := doors.NewBeam(c.path, func(p Path) bool {
+			return p.IsMain
+		})
+		return doors.Sub(b, func(isMain bool) templ.Component {
+			if isMain {
+				return main()
+			}
+			return category(c.path)
+		})
 	})
 }
+
+/*
+Instead of doing this:
+
+templ (c *catalogPage) Render(b doors.SourceBeam[Path]) {
+	@common.Template(c)
+}
+
+Because there is only one component `common.Template(c)`, we can return it directly:
+*/
 
 func (c *catalogPage) Render(b doors.SourceBeam[Path]) templ.Component {
-	c.path = b
-	return common.Template(c)
+    c.path = b
+    return common.Template(c)
 }
 
+// page request handler
 func Handler(p doors.PageRouter[Path], r doors.RPage[Path]) doors.PageRoute {
-	return p.Page(&catalogPage{})
+	return p.Page(&catalogPage{
+		session: common.GetSession(r),
+	})
 }

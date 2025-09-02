@@ -1,0 +1,78 @@
+package home
+
+import (
+	"context"
+	"github.com/derstruct/doors-tutorial/driver"
+	"github.com/doors-dev/doors"
+	"net/http"
+	"time"
+)
+
+func login() templ.Component {
+	return doors.F(&loginFragment{})
+}
+
+const userLogin = "admin"
+const userPassword = "password123"
+const sessionDuration = time.Hour * 24
+
+type loginData struct {
+	Login    string `form:"login"`
+	Password string `form:"password"`
+}
+
+type loginFragment struct {
+	message doors.Door
+}
+
+templ (l *loginFragment) errorMessage() {
+	<p><mark>wrong password or login</mark></p>
+}
+
+func (f *loginFragment) submit(ctx context.Context, r doors.RForm[loginData]) bool {
+	if r.Data().Login != userLogin || r.Data().Password != userPassword {
+		f.message.Update(ctx, f.errorMessage())
+		return false
+	}
+	session := driver.Sessions.Add(r.Data().Login, sessionDuration)
+	r.SetCookie(&http.Cookie{
+		Name:     "session",
+		Value:    session.Token,
+		Expires:  time.Now().Add(sessionDuration),
+		Path:     "/",
+		HttpOnly: true,
+	})
+	r.After(doors.AfterLocationReload())
+	doors.SessionExpire(ctx, sessionDuration)
+	return true
+}
+
+templ (f *loginFragment) Render() {
+	<h1>Log In</h1>
+	@doors.ASubmit[loginData]{
+		Indicator: doors.IndicatorAttrQuery("#login-submit", "aria-busy", "true"),
+		Scope:     doors.ScopeBlocking(),
+		On:        f.submit,
+	}
+	<form>
+		<fieldset>
+			<label>
+				Login
+				<input
+					name="login"
+					required="true"
+				/>
+			</label>
+			<label>
+				Password
+				<input
+					type="password"
+					name="password"
+					required="true"
+				/>
+			</label>
+			@f.message
+		</fieldset>
+		<button id="login-submit" role="submit">Log In</button>
+	</form>
+}
